@@ -1,0 +1,12 @@
+[package]
+name = "raspi_clock"
+version = "0.1.0"
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+gpio-cdev = "0.4.0"
+max7219 = "0.3.1"
+embedded-hal = "0.2.5"
+chrono = "0.4.19"
