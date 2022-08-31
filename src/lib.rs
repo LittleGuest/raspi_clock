@@ -4,7 +4,12 @@ use max7219::connectors::PinConnector;
 use max7219::MAX7219;
 use std::time::Duration;
 
-mod mapping;
+pub mod error;
+pub mod mapping;
+pub mod store;
+
+#[macro_use]
+extern crate lazy_static;
 
 struct LHandle(LineHandle);
 
@@ -20,7 +25,38 @@ impl OutputPin for LHandle {
     }
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+pub fn dispatch_data(data: &[[u8; 8]]) -> anyhow::Result<(), error::Err> {
+    let mut chip = Chip::new("/dev/gpiochip0")?;
+
+    let data_pin = chip
+        .get_line(24)?
+        .request(LineRequestFlags::OUTPUT, 0, "")?;
+    let cs_pin = chip
+        .get_line(23)?
+        .request(LineRequestFlags::OUTPUT, 0, "")?;
+    let clk_pin = chip
+        .get_line(18)?
+        .request(LineRequestFlags::OUTPUT, 0, "")?;
+
+    let data_pin = LHandle(data_pin);
+    let cs_pin = LHandle(cs_pin);
+    let clk_pin = LHandle(clk_pin);
+
+    let mut max7219 = MAX7219::from_pins(4, data_pin, cs_pin, clk_pin).unwrap();
+
+    max7219.power_on().unwrap();
+    clear(&mut max7219);
+    loading(&mut max7219);
+
+    loop {
+        data.iter().enumerate().for_each(|(i, m)| {
+            let _ = max7219.write_raw(i, m);
+        });
+        std::thread::sleep(Duration::from_millis(1000));
+    }
+}
+
+pub fn start() -> anyhow::Result<(), error::Err> {
     println!();
     println!("请输入对应的引脚编号: <data> <cs> <clk>");
     println!();
@@ -94,6 +130,4 @@ fn load_time(max7219: &mut MAX7219<PinConnector<LHandle, LHandle, LHandle>>) {
     data.iter().enumerate().for_each(|(i, m)| {
         let _ = max7219.write_raw(i, m);
     });
-
-    std::thread::sleep(Duration::from_millis(1000));
 }

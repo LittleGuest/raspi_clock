@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Max7219</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-content: center;
+        }
+
+        #app {
+            height: 100%
+        }
+
+        .el-checkbox {
+            margin-right: 14px;
+        }
+    </style>
+</head>
+<body>
+<div id="app">
+    <el-container>
+        <el-main>
+            <el-tabs v-model="activeName" @tab-click="handleClick">
+                <el-tab-pane label="首页" name="index">
+                    <v-chart autoresize :option="option"/>
+                </el-tab-pane>
+                <el-tab-pane label="蓝牙连接" name="bluetooth">蓝牙连接</el-tab-pane>
+                <el-tab-pane label="设计" name="design">
+                    <div class="display-container">
+                        <el-tag type="success">DISPLAY 0</el-tag>
+                        <div v-for="(xx,x) in display0">
+                            <el-checkbox v-for="(yy,y) in xx" @change="handleChange('display0',display0[x][y],x,y)"
+                                         v-model="display0[x][y]">
+                            </el-checkbox>
+                        </div>
+                        <el-tag type="success">DISPLAY 1</el-tag>
+                        <div v-for="(xx,x) in display1">
+                            <el-checkbox v-for="(yy,y) in xx" @change="handleChange('display1',display1[x][y],x,y)"
+                                         v-model="display1[x][y]">
+                            </el-checkbox>
+                        </div>
+                        <el-tag type="success">DISPLAY 2</el-tag>
+                        <div v-for="(xx,x) in display2">
+                            <el-checkbox v-for="(yy,y) in xx" @change="handleChange('display2',display2[x][y],x,y)"
+                                         v-model="display2[x][y]">
+                            </el-checkbox>
+                        </div>
+                        <el-tag type="success">DISPLAY 3</el-tag>
+                        <div v-for="(xx,x) in display3">
+                            <el-checkbox v-for="(yy,y) in xx" @change="handleChange('display3',display3[x][y],x,y)"
+                                         v-model="display3[x][y]">
+                            </el-checkbox>
+                        </div>
+                    </div>
+                    <el-divider></el-divider>
+                    <el-button type="primary" @click="dispatch">保存</el-button>
+                    <el-button type="primary" @click="clear">重置</el-button>
+                </el-tab-pane>
+                <el-tab-pane label="GPIO设置" name="gpio">GPIO设置</el-tab-pane>
+            </el-tabs>
+        </el-main>
+    </el-container>
+</div>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/vue@2.6.12"></script>
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@vue/composition-api@1.0.5"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.1.2/dist/echarts.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue-echarts@6.0.0/dist/index.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script>
+    Vue.component("v-chart", VueECharts);
+    Vue.component("axiox", axios);
+    let app = new Vue({
+        el: '#app',
+        data() {
+            return {
+                activeName: 'index',
+                display0: [
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                ],
+                display1: [
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                ],
+                display2: [
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                ],
+                display3: [
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                ],
+                option: {
+                    title: {
+                        text: '基础雷达图'
+                    },
+                    legend: {
+                        data: ['预算分配（Allocated Budget）', '实际开销（Actual Spending）']
+                    },
+                    radar: {
+                        // shape: 'circle',
+                        indicator: [
+                            {name: '销售（Sales）', max: 6500},
+                            {name: '管理（Administration）', max: 16000},
+                            {name: '信息技术（Information Technology）', max: 30000},
+                            {name: '客服（Customer Support）', max: 38000},
+                            {name: '研发（Development）', max: 52000},
+                            {name: '市场（Marketing）', max: 25000}
+                        ]
+                    },
+                    series: [{
+                        name: '预算 vs 开销（Budget vs spending）',
+                        type: 'radar',
+                        data: [
+                            {
+                                value: [4200, 3000, 20000, 35000, 50000, 18000],
+                                name: '预算分配（Allocated Budget）'
+                            },
+                            {
+                                value: [5000, 14000, 28000, 26000, 42000, 21000],
+                                name: '实际开销（Actual Spending）'
+                            }
+                        ]
+                    }]
+                },
+            }
+        },
+        mounted() {
+            // axios.post("/api/v1/design", display).then((resp) => {
+            //     let display0 = resp[0];
+            //     let display1 = resp[1];
+            //     let display2 = resp[2];
+            //     let display3 = resp[3];
+            // }).catch((err) => {
+            // }).then(() => {
+            // })
+        },
+        methods: {
+            handleClick(tab, event) {
+            },
+            handleChange(display, value, x, y) {
+                switch (display) {
+                    case 'display0':
+                        this.display0[x][y] = value;
+                        break;
+                    case 'display1':
+                        this.display1[x][y] = value;
+                        break;
+                    case 'display2':
+                        this.display2[x][y] = value;
+                        break;
+                    case 'display3':
+                        this.display3[x][y] = value;
+                        break;
+                    default:
+                        break
+                }
+            },
+            dispatch() {
+                let display0 = [];
+                let display1 = [];
+                let display2 = [];
+                let display3 = [];
+
+                this.display0.forEach((xx, x, _) => {
+                    xx.forEach((yy, y, _) => {
+                        this.display0[x][y] = this.display0[x][y] ? 1 : 0;
+                    })
+                    display0.push(parseInt(parseInt(xx.join(""), 2).toString(10)));
+                })
+
+                this.display1.forEach((xx, x, _) => {
+                    xx.forEach((yy, y, _) => {
+                        this.display1[x][y] = this.display1[x][y] ? 1 : 0;
+                    })
+                    display1.push(parseInt(parseInt(xx.join(""), 2).toString(10)));
+                })
+
+                this.display2.forEach((xx, x, _) => {
+                    xx.forEach((yy, y, _) => {
+                        this.display2[x][y] = this.display2[x][y] ? 1 : 0;
+                    })
+                    display2.push(parseInt(parseInt(xx.join(""), 2).toString(10)));
+                })
+
+                this.display3.forEach((xx, x, _) => {
+                    xx.forEach((yy, y, _) => {
+                        this.display3[x][y] = this.display3[x][y] ? 1 : 0;
+                    })
+                    display3.push(parseInt(parseInt(xx.join(""), 2).toString(10)));
+                })
+
+                let display = [
+                    display0,
+                    display1,
+                    display2,
+                    display3,
+                ];
+
+                axios.post("/api/v1/design/dispatch", display).then((resp) => {
+                }).catch((err) => {
+                }).then(() => {
+                })
+            },
+            clear() {
+                this.display0 = [
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                ];
+
+                this.display1 = [
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                ];
+
+                this.display2 = [
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                ];
+
+                this.display3 = [
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                    [false, false, false, false, false, false, false, false,],
+                ];
+            }
+        }
+    });
+</script>
+</html>
